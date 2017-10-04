@@ -17,6 +17,8 @@ from django.conf.urls import url, include
 from django.contrib import admin
 from . import views
 import person.views
+import django.contrib.auth.views
+#import django.contrib.auth.urls
 
 urlpatterns = [
     url(r'^admin/', admin.site.urls),
@@ -24,4 +26,6 @@ urlpatterns = [
     url(r'^person/', person.views.index),
     url(r'^polls/', include('polls.urls')),
     url(r'^chaxun/', include('chaxun.urls')),
+    url(r'^accounts/', include('users.urls')),
+    #url(r'^accounts/login/', django.contrib.auth.views.LoginView.as_view())
 ]

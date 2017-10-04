@@ -7,6 +7,8 @@ from django.http import HttpResponse
 from PIL import Image, ImageDraw, ImageFont, ImageFilter
 import chaxun.captcha
 from .models import AccountInfo
+from django.contrib.auth.decorators import login_required
+
 
 
 def captcha(request):
@@ -19,7 +21,7 @@ def captcha(request):
     return HttpResponse(buf.getvalue(), 'image/png')  # return the image data stream as image/jpeg format, browser
     # will treat it as an image
 
-
+@login_required
 def index(request):
     return render(request, 'chaxun/index.html')
 

@@ -31,6 +31,8 @@ ALLOWED_HOSTS = []
 # Application definition
 
 INSTALLED_APPS = [
+    #'accounts.apps.AccountsConfig',
+    'users',
     'polls.apps.PollsConfig',
     'chaxun.apps.ChaxunConfig',
     'django.contrib.admin',
@@ -53,6 +55,7 @@ MIDDLEWARE = [
 ]
 
 ROOT_URLCONF = 'hello.urls'
+AUTH_USER_MODEL = 'users.User'
 
 TEMPLATES = [
     {
