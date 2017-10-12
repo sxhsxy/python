@@ -12,6 +12,7 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import datetime
+import calendar
 import cx_Oracle
 import sqlalchemy
 from dateutil.relativedelta import *
@@ -24,7 +25,7 @@ hospital_table = rs.fetchall()
 
 
 def get_hospital_id(hospital_str):
-    print('hospital_str: %s' % hospital_str)
+    # print('hospital_str: %s' % hospital_str)
     for item in hospital_table:
         if item[1] in hospital_str:
             return item[0]
@@ -33,7 +34,6 @@ def get_hospital_id(hospital_str):
 
 now_date = datetime.datetime.now()
 last_month = (now_date - relativedelta(months=1)).strftime("%Y%m")
-working_month = last_month
 sr = pd.Series("""杭州市萧山区第一人民医院
 杭州市萧山区第二人民医院
 杭州市萧山区第三人民医院
@@ -73,12 +73,14 @@ def to_sql(month = last_month):
     "E:/sync360/documents/VVV项目方案VVV/智慧医疗诊间结算/统计数据/{}".format(working_month))
 
     #智慧医疗窗口数据
-    df = pd.read_excel("市民卡智慧医疗业务量报表.xlsx", parse_cols='A,J,O')
+    file_name1 = '市民卡智慧医疗业务量报表.xlsx' if os.path.exists('市民卡智慧医疗业务量报表.xlsx') else '市民卡智慧医疗业务量报表.xls'
+    file_name2 = '市民卡智慧医疗自助服务报表.xlsx' if os.path.exists('市民卡智慧医疗自助服务报表.xlsx') else '市民卡智慧医疗自助服务报表.xls'
+    df = pd.read_excel(file_name1, parse_cols='A,J,O')
     df.columns = '医院名称 窗口充值数（次） 窗口充值金额（元）'.split()
     df = df[df.iloc[:, 0].str.contains('萧山').fillna(value=False)]
 
     #智慧医疗自助机数据
-    df2 = pd.read_excel('市民卡智慧医疗自助服务报表.xlsx', parse_cols='A,E,K,P,AK,AP')
+    df2 = pd.read_excel(file_name2, parse_cols='A,E,K,P,AK,AP')
     df2.columns = '医院名称 健康卡发卡数 自助机充值数（次） 自助机充值金额（元） \
                     市民卡智慧结算交易数（次）	市民卡智慧结算交易金额（元）'.split()
     df2 = df2[df2.iloc[:, 0].str.contains('萧山').fillna(value=False)]
@@ -92,14 +94,14 @@ def to_sql(month = last_month):
     df3.columns = sql_columns
     df3.loc[:, 'hospital_id'] = df3.loc[:, 'hospital_id'].apply(get_hospital_id)
 
-    print(df3)
+    # print(df3)
 
     sql_values = []
     for s in sql_columns:
         sql_values.append(':' + s)
     insert_sql = '''insert into 
                     smk_statistic(hospital_id,reporting_month,healthy_card_issued,smart_consumption_times,smart_consumption_amount,counter_recharge_times,counter_recharge_amount,machine_recharge_times,machine_recharge_amount) 
-                    values (:hospital_id,to_date(:reporting_month, '%Y%m'),:healthy_card_issued,:smart_consumption_times,:smart_consumption_amount,:counter_recharge_times,:counter_recharge_amount,:machine_recharge_times,:machine_recharge_amount)'''
+                    values (:hospital_id,to_date(:reporting_month, 'yyyyMM'),:healthy_card_issued,:smart_consumption_times,:smart_consumption_amount,:counter_recharge_times,:counter_recharge_amount,:machine_recharge_times,:machine_recharge_amount)'''
     con = enginex.connect()
     for row in df3.itertuples(index=False):
         con.execute(sqlalchemy.text(insert_sql), row._asdict())
@@ -112,7 +114,7 @@ def print_usage():
 def add_months(dt,months): 
     #返回dt隔months个月后的日期，months相当于步长 
     month = dt.month - 1 + months
-    year = dt.year + month / 12
+    year = int(dt.year + month / 12)
     month = month % 12 + 1
     day = min(dt.day, calendar.monthrange(year, month)[1])
     return dt.replace(year=year, month=month, day=day)
@@ -141,14 +143,15 @@ if __name__ == '__main__':
                 print_usage()
         elif re.fullmatch(r'20[0-9]{2}(0[1-9]|1[012])', sys.argv[1]) != None:
             try:
-                mx = datetime.datetime.strptime(date_string=sys.argv[1], format="%Y%m")
-                months.append(mx)
+                mx = datetime.datetime.strptime(sys.argv[1], "%Y%m")
+                months.append(sys.argv[1])
             except ValueError as e:
                 print(e)
                 print_usage()
     else:
         print_usage()
     for m in months:
+        print("================{}===============".format(m))
         to_sql(m)
 
 
